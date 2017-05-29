@@ -121,9 +121,15 @@ for i in range(len(best_samples)):
 #training_data_save = np.array(training_data)
 #np.save('saved-data.npy', training_data_save)
 
+
+### neural network design
 def neural_network_model(input_size):
+
+    #input layer
     network = input_data(shape=[None, input_size, 1], name='input')
 
+
+    #hidden layers
     network = fully_connected(network, 128, activation='relu')
     network = dropout(network, 0.8)
 
@@ -139,14 +145,21 @@ def neural_network_model(input_size):
     network = fully_connected(network, 128, activation='relu')
     network = dropout(network, 0.8)
 
+
+    #output layer
     network = fully_connected(network, 2, activation='softmax')
     network = regression(network, optimizer='adam', learning_rate=LR, loss='categorical_crossentropy', name='targets')
     model = tflearn.DNN(network, tensorboard_dir='log')
 
     return model
 
+
+### train model and fit
 def train_model(training_data, model=False):
+
+    #extract observations
     X = np.array([i[0] for i in training_data]).reshape(-1, training_data[0][0].size, 1)
+    #extract actions
     y = [i[1] for i in training_data]
 
     if not model:
@@ -158,6 +171,7 @@ def train_model(training_data, model=False):
 
 model = train_model(training_data)
 
+### run game x times with predictions from trained model
 scores = []
 choices = []
 for each_game in range(output_games):
@@ -165,11 +179,17 @@ for each_game in range(output_games):
     game_memory = []
     prev_obs = []
     env.reset()
+
+    # per frame
     for _ in range(200):
+
+        # render the game, comment this out to speed up the process
         env.render()
 
+        # start with a random action in 1st frame
         if len(prev_obs) == 0:
             action = random.randrange(0, 2)
+        # continue with predicted actions
         else:
             action = np.argmax(model.predict(prev_obs.reshape(-1, len(prev_obs), 1))[0])
 
