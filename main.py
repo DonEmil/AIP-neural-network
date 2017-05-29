@@ -117,6 +117,10 @@ for i in range(len(best_samples)):
 
 
 
+### save data from sample, uncomment to overwrite file
+#training_data_save = np.array(training_data)
+#np.save('saved-data.npy', training_data_save)
+
 def neural_network_model(input_size):
     network = input_data(shape=[None, input_size, 1], name='input')
 
