@@ -18,8 +18,8 @@ training_data = []
 
 ### algorithm variables
 number_of_generations = 3
-sample_size = 400
-best_sample_size = 20
+sample_size = 500
+best_sample_size = 30
 output_games = 10
 
 
@@ -28,7 +28,7 @@ def create_clones(samples_to_clone, current_best_index):
 
     # make all rows identical to the best sample so far
     copied_rand_numbers = samples_to_clone
-    for i in range(copied_rand_numbers[0, :].size):
+    for i in range(copied_rand_numbers[:, 0].size):
         copied_rand_numbers[i, :] = samples_to_clone[current_best_index, :]
 
     # change some numbers if a certain probability is met
@@ -184,7 +184,7 @@ for each_game in range(output_games):
     for _ in range(200):
 
         # render the game, comment this out to speed up the process
-        env.render()
+        #env.render()
 
         # start with a random action in 1st frame
         if len(prev_obs) == 0:
@@ -199,7 +199,8 @@ for each_game in range(output_games):
         prev_obs = new_observation
         game_memory.append([new_observation, action])
         score += reward
-        if done: break
+        if done:
+            break
 
     scores.append(score)
 
@@ -210,7 +211,5 @@ print("length: ", len(scores_values))
 
 plt.hist(scores, 50, normed=1)
 plt.show()
-
-
 
 

@@ -91,7 +91,7 @@ for each_game in range(output_games):
     # per frame
     for _ in range(200):
         # render the game, comment this out to speed up the process
-        env.render()
+        #env.render()
 
         # start with a random action in 1st frame
         if len(prev_obs) == 0:
@@ -106,7 +106,8 @@ for each_game in range(output_games):
         prev_obs = new_observation
         game_memory.append([new_observation, action])
         score += reward
-        if done: break
+        if done:
+            break
 
     scores.append(score)
 
