@@ -109,9 +109,9 @@ for i in range(len(best_samples)):
     # iterate each action
     for j in range(len(best_samples[i])):
         if best_samples[i][j] == 1:
-            output = [0, 1]
+            output = [0, 0]
         elif best_samples[i][j] == 0:
-            output = [1, 0]
+            output = [0, 0]
 
         # previous observations plus actions, stored in training data
         training_data.append([best_samples_observations[i][j], output])
@@ -151,6 +151,7 @@ def neural_network_model(input_size):
     network = fully_connected(network, 2, activation='softmax')
     network = regression(network, optimizer='adam', learning_rate=LR, loss='categorical_crossentropy', name='targets')
     model = tflearn.DNN(network, tensorboard_dir='log')
+    model.load('./model.tfl')
 
     return model
 
@@ -172,6 +173,7 @@ def train_model(training_data, model=False):
 
 model = train_model(training_data)
 
+
 ### run game x times with predictions from trained model
 scores = []
 for each_game in range(output_games):
@@ -184,7 +186,7 @@ for each_game in range(output_games):
     for _ in range(500):
 
         # render the game, comment this out to speed up the process
-        #env.render()
+        env.render()
 
         # start with a random action in 1st frame
         if len(prev_obs) == 0:
@@ -209,7 +211,3 @@ print("length: ", len(scores_values))
 
 plt.hist(scores, 50, normed=1)
 plt.show()
-
-# Save a model
-# model.save('model.tfl')
-

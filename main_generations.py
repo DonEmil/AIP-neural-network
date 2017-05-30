@@ -17,9 +17,9 @@ training_data = []
 
 
 ### algorithm variables
-number_of_generations = 3
-sample_size = 400
-best_sample_size = 20
+number_of_generations = 2
+sample_size = 500
+best_sample_size = 10
 output_games = 10
 
 
@@ -79,10 +79,10 @@ for _ in range(best_sample_size):
     best_score = 0
     best_score_index = 0
     #set up the observations
-    obs = np.zeros((sample_size, 500, 4))
+    obs = np.zeros((sample_size, 200, 4))
 
     # initial population
-    rand_numbers = np.zeros((sample_size, 500), dtype=np.int)
+    rand_numbers = np.zeros((sample_size, 200), dtype=np.int)
     #inital randomness
     for i in range(rand_numbers[:,0].size):
         for j in range(rand_numbers[0, :].size):
@@ -117,7 +117,6 @@ for i in range(len(best_samples)):
         training_data.append([best_samples_observations[i][j], output])
 
 
-
 ### save data from sample, uncomment to overwrite file
 #training_data_save = np.array(training_data)
 #np.save('saved-data.npy', training_data_save)
@@ -125,10 +124,13 @@ for i in range(len(best_samples)):
 
 ### neural network design
 def neural_network_model(input_size):
+    print("SIZE11")
+    print(input_size)
 
     #input layer
     network = input_data(shape=[None, input_size, 1], name='input')
 
+    print("DID THIS HAPPEN?1")
 
     #hidden layers
     network = fully_connected(network, 128, activation='relu')
@@ -154,34 +156,103 @@ def neural_network_model(input_size):
 
     return model
 
+### neural network design
+def neural_network_model2(input_size):
+
+    print("SIZE22")
+    print(input_size)
+
+    #input layer
+    network2 = input_data(shape=[None, input_size, 1], name='input2')
+
+    print("DID THIS HAPPEN?2")
+
+    #hidden layers
+    network2 = fully_connected(network2, 128, activation='relu')
+    network2 = dropout(network2, 0.8)
+
+    network2 = fully_connected(network2, 256, activation='relu')
+    network2 = dropout(network2, 0.8)
+
+    network2 = fully_connected(network2, 512, activation='relu')
+    network2 = dropout(network2, 0.8)
+
+    network2 = fully_connected(network2, 256, activation='relu')
+    network2 = dropout(network2, 0.8)
+
+    network2 = fully_connected(network2, 128, activation='relu')
+    network2 = dropout(network2, 0.8)
+
+
+    #output layer
+    network2 = fully_connected(network2, 2, activation='softmax')
+    network2 = regression(network2, optimizer='adam', learning_rate=LR, loss='categorical_crossentropy', name='targets')
+    model2 = tflearn.DNN(network2, tensorboard_dir='log')
+
+    return model2
+
 
 ### train model and fit
-def train_model(training_data, model=False):
+def train_model(_training_data, model=False):
 
     #extract observations
-    X = np.array([i[0] for i in training_data]).reshape(-1, training_data[0][0].size, 1)
+    X = np.array([i[0] for i in training_data]).reshape(-1, _training_data[0][0].size, 1)
+    print (X)
     #extract actions
     y = [i[1] for i in training_data]
+    print(y)
 
+    print ("SIZE1")
+    print (X[0].size)
+    print("SIZE1y")
+    print(len(y))
     if not model:
         model = neural_network_model(input_size=X[0].size)
 
     model.fit({'input': X}, {'targets': y}, n_epoch=5, snapshot_step=500, show_metric=True, run_id='openai_learning')
     return model
 
+### train model and fit
+def train_model2(_training_data, model2=False):
+
+    #extract observations
+    X = np.array([i[0] for i in training_data]).reshape(-1, _training_data[0][0].size, 1)
+    print(X)
+    #extract actions
+    y = [i[1] for i in training_data]
+    print(y)
+
+    print("SIZE2X")
+    print(X[0].size)
+    print("SIZE2y")
+    print(len(y))
+    if not model2:
+        model2 = neural_network_model2(input_size=X[0].size)
+
+    print("DID THIS HAPPEN?3")
+    model2.fit({'input': X}, {'targets': y}, n_epoch=5, snapshot_step=500, show_metric=True, run_id='openai_learning2')
+    print("DID THIS HAPPEN?4")
+    return model2
+
 
 model = train_model(training_data)
 
 ### run game x times with predictions from trained model
 scores = []
+choices = []
+obs = []
+
+second_gen_all_choices = []
+second_gen_all_obs = []
 for each_game in range(output_games):
     score = 0
     game_memory = []
     prev_obs = []
     env.reset()
 
+
     # per frame
-    for _ in range(500):
+    for _ in range(200):
 
         # render the game, comment this out to speed up the process
         #env.render()
@@ -192,6 +263,80 @@ for each_game in range(output_games):
         # continue with predicted actions
         else:
             action = np.argmax(model.predict(prev_obs.reshape(-1, len(prev_obs), 1))[0])
+
+        choices.append(action)
+
+        new_observation, reward, done, info = env.step(action)
+        prev_obs = new_observation
+        obs.append(prev_obs)
+        game_memory.append([new_observation, action])
+
+        score += reward
+        if new_observation[0] > 2.39 or new_observation[0] < -2.39 \
+                or new_observation[2] > 0.19 or new_observation[2] < -0.19:
+            break
+    second_gen_all_choices.append(choices)
+    second_gen_all_obs.append(obs)
+    scores.append(score)
+
+#env.close()
+#print(scores)
+#print("best samples mean: ", np.mean(scores_values))
+#print("length: ", len(scores_values))
+
+#plt.hist(scores, 50, normed=1)
+#plt.show()
+
+### SECOND GENERATION
+
+
+### format the training data
+# iterate each sample
+second_gen_training_data = []
+for i in range(len(second_gen_all_choices)):
+    for j in range (len(second_gen_all_choices[i])):
+
+        if second_gen_all_choices[i][j] == 1:
+            output = [0, 1]
+        elif second_gen_all_choices[i][j] == 0:
+            output = [1, 0]
+
+        # previous observations plus actions, stored in training data
+        second_gen_training_data.append([second_gen_all_obs[i][j], output])
+
+
+#second_gen_training_data = np.array(second_gen_training_data)
+
+second_gen_model = train_model2(second_gen_training_data)
+
+
+print("DID THIS HAPPEN?5")
+
+
+### run game x times with predictions from trained model
+second_gen_scores = []
+second_gen_choices = []
+for each_game in range(10):
+    score = 0
+    game_memory = []
+    prev_obs = []
+    env.reset()
+
+    # per frame
+    for _ in range(200):
+
+        # render the game, comment this out to speed up the process
+        env.render()
+
+        # start with a random action in 1st frame
+        if len(prev_obs) == 0:
+            action = random.randrange(0, 2)
+        # continue with predicted actions
+        else:
+            action = np.argmax(second_gen_model.predict(prev_obs.reshape(-1, len(prev_obs), 1))[0])
+
+            second_gen_choices.append(action)
+
         new_observation, reward, done, info = env.step(action)
         prev_obs = new_observation
         game_memory.append([new_observation, action])
@@ -200,16 +345,12 @@ for each_game in range(output_games):
                 or new_observation[2] > 0.19 or new_observation[2] < -0.19:
             break
 
-    scores.append(score)
+        second_gen_scores.append(score)
 
 env.close()
-print(scores)
-print("best samples mean: ", np.mean(scores_values))
-print("length: ", len(scores_values))
+print(second_gen_scores)
+#print("best samples mean: ", np.mean(scores_values))
+#print("length: ", len(scores_values))
 
-plt.hist(scores, 50, normed=1)
+plt.hist(second_gen_scores, 50, normed=1)
 plt.show()
-
-# Save a model
-# model.save('model.tfl')
-

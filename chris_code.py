@@ -152,6 +152,7 @@ def test(_lr, _epochs, whatModel):
 #test(0.02, 20, 1)
 test(0.005, 30, 2)
 
+
 '''for epochs in range(10, 20, 2):
     for learn in range(100, 1000, 1):
         test(1/learn, epochs)'''
