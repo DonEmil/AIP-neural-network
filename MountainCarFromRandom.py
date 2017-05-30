@@ -110,6 +110,8 @@ def test(_lr, _epochs, hidden_layers, whatModel):
         model.compile(loss='mse', optimizer=sgd, metrics=['accuracy'])
 
         model.fit(X, y, epochs=_epochs)
+        model.save("model")
+
 
 
     env = gym.make('MountainCar-v0')
@@ -235,12 +237,13 @@ test(0.01, 40, 100, 2)
 
 '''
 Example
-Average accepted score: -174.35
+Average accepted score: -174.64102564102564
+
 
 to
 
-6761/6761 [==============================] - 0s - loss: 0.1715 - acc: 0.6552
-Average Score: -136.6
-choice2:0.568814055636896 choice 1:0.0021961932650073207  choice 0:0.4289897510980966
+6772/6772 [==============================] - 0s - loss: 0.1668 - acc: 0.6692
+Average Score: -124.5
+choice2:0.7293172690763052 choice 1:0.005622489959839358  choice 0:0.26506024096385544
 
 '''
