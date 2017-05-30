@@ -173,7 +173,6 @@ model = train_model(training_data)
 
 ### run game x times with predictions from trained model
 scores = []
-choices = []
 for each_game in range(output_games):
     score = 0
     game_memory = []
@@ -192,9 +191,6 @@ for each_game in range(output_games):
         # continue with predicted actions
         else:
             action = np.argmax(model.predict(prev_obs.reshape(-1, len(prev_obs), 1))[0])
-
-        choices.append(action)
-
         new_observation, reward, done, info = env.step(action)
         prev_obs = new_observation
         game_memory.append([new_observation, action])
